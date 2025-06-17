@@ -131,6 +131,17 @@
             box-shadow: 0 8px 25px rgba(17, 153, 142, 0.4);
         }
 
+        .btn-spotify {
+            background: linear-gradient(135deg, #1db954, #191414);
+            color: white;
+            box-shadow: 0 4px 15px rgba(30, 215, 96, 0.15);
+        }
+
+        .btn-spotify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 215, 96, 0.25);
+        }
+
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
@@ -256,6 +267,8 @@
         </div>
 
         <div class="main-content">
+
+            <!-- YOUTUBE SECTION -->
             <div class="input-section">
                 <label for="youtube-url" class="input-label">🎬 Enter YouTube URL</label>
                 <input 
@@ -273,6 +286,43 @@
                 <button class="btn btn-secondary" onclick="downloadVideo()" id="download-btn" style="display: none;">
                     ⬇️ Download Video
                 </button>
+            </div>
+
+            <!-- SPOTIFY SECTION -->
+            <div class="input-section" style="margin-top: 40px;">
+                <label for="spotify-url" class="input-label">🎵 Enter Spotify Track/Playlist/Album URL</label>
+                <input 
+                    type="text" 
+                    id="spotify-url" 
+                    class="url-input" 
+                    placeholder="https://open.spotify.com/track/..."
+                >
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-spotify" onclick="downloadSpotify()">
+                    🟢 Download Spotify
+                </button>
+            </div>
+
+            <!-- MLA CITATION MAKER SECTION -->
+            <div class="input-section" style="margin-top: 40px;">
+                <label class="input-label">📚 MLA Citation Maker</label>
+                <div style="display: grid; gap: 12px;">
+                    <input type="text" id="mla-author" class="url-input" placeholder="Author (Last, First)">
+                    <input type="text" id="mla-title" class="url-input" placeholder="Title of Source">
+                    <input type="text" id="mla-website" class="url-input" placeholder="Website or Container Title">
+                    <input type="text" id="mla-publisher" class="url-input" placeholder="Publisher">
+                    <input type="text" id="mla-date" class="url-input" placeholder="Publication Date (e.g. 17 June 2025)">
+                    <input type="text" id="mla-url" class="url-input" placeholder="URL">
+                    <button class="btn btn-primary" onclick="generateMLACitation()">Generate Citation</button>
+                </div>
+                <div id="mla-citation-result" style="margin-top: 18px; display: none;">
+                    <div style="background:#f8f9fa;border-radius:8px;padding:16px;word-break:break-word;">
+                        <span id="mla-citation-text"></span>
+                        <button class="btn btn-secondary" style="float:right;margin-top:6px;" onclick="copyMLACitation()">Copy</button>
+                    </div>
+                </div>
             </div>
 
             <div class="error-message" id="error-msg"></div>
@@ -297,12 +347,12 @@
                     <div class="feature">
                         <div class="feature-icon">⬇️</div>
                         <h3>Download Option</h3>
-                        <p>Download videos directly to your device</p>
+                        <p>Download videos or Spotify tracks directly to your device</p>
                     </div>
                     <div class="feature">
                         <div class="feature-icon">🚀</div>
                         <h3>Fast & Clean</h3>
-                        <p>No ads, no distractions, just the video</p>
+                        <p>No ads, no distractions, just the music & video</p>
                     </div>
                 </div>
             </div>
@@ -434,6 +484,110 @@
                 loadVideo();
             }
         });
+
+        // --- Spotify Downloader ---
+        function extractSpotifyId(url) {
+            // Supports track, album, playlist, artist
+            const regex = /open\.spotify\.com\/(track|album|playlist|artist)\/([a-zA-Z0-9]+)/;
+            const match = url.match(regex);
+            if (!match) return null;
+            return {
+                type: match[1],
+                id: match[2]
+            };
+        }
+
+        function downloadSpotify() {
+            const url = document.getElementById('spotify-url').value.trim();
+            if (!url) {
+                showError('Please enter a Spotify URL');
+                return;
+            }
+
+            const spotify = extractSpotifyId(url);
+            if (!spotify) {
+                showError('Invalid Spotify URL. Please check the format.');
+                return;
+            }
+
+            // Provide download options using popular Spotify downloaders
+            const downloadOptions = [
+                {
+                    name: 'Spotify Downloader (spotifydown.com)',
+                    url: `https://spotifydown.com/?url=${encodeURIComponent(url)}`
+                },
+                {
+                    name: 'SpotDL',
+                    url: `https://spotdl.com/spotify/${spotify.type}/${spotify.id}`
+                },
+                {
+                    name: 'SnapSave',
+                    url: `https://snapsave.io/spotify-downloader?url=${encodeURIComponent(url)}`
+                }
+            ];
+
+            const downloadWindow = window.open('', '_blank', 'width=600,height=400');
+            downloadWindow.document.write(`
+                <html>
+                <head><title>Download Options - Spotify</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+                    <h2>Spotify Download Options</h2>
+                    <p>Choose a download service:</p>
+                    ${downloadOptions.map(option => 
+                        `<p><a href="${option.url}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #1db954; color: white; text-decoration: none; border-radius: 5px; margin: 5px 0;">${option.name}</a></p>`
+                    ).join('')}
+                    <hr>
+                    <p><small>Note: These are third-party services. Please respect copyright laws and Spotify's terms of service.</small></p>
+                    <button onclick="window.close()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+                </body>
+                </html>
+            `);
+        }
+
+        // Allow Enter key to trigger Spotify download
+        document.getElementById('spotify-url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                downloadSpotify();
+            }
+        });
+
+        // MLA Citation Maker
+        function generateMLACitation() {
+            const author = document.getElementById('mla-author').value.trim();
+            const title = document.getElementById('mla-title').value.trim();
+            const website = document.getElementById('mla-website').value.trim();
+            const publisher = document.getElementById('mla-publisher').value.trim();
+            const date = document.getElementById('mla-date').value.trim();
+            const url = document.getElementById('mla-url').value.trim();
+
+            let citation = "";
+
+            if (author) citation += author + ". ";
+            if (title) citation += `"${title}." `;
+            if (website) citation += `<i>${website}</i>, `;
+            if (publisher) citation += publisher + ", ";
+            if (date) citation += date + ", ";
+            if (url) citation += url;
+
+            // Remove trailing comma and space if needed
+            citation = citation.replace(/, $/, "");
+
+            if (!citation) {
+                showError("Please fill in at least one field for the citation.");
+                document.getElementById('mla-citation-result').style.display = "none";
+                return;
+            }
+
+            document.getElementById('mla-citation-text').innerHTML = citation;
+            document.getElementById('mla-citation-result').style.display = "block";
+        }
+
+        function copyMLACitation() {
+            const text = document.getElementById('mla-citation-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess("Citation copied to clipboard!");
+            });
+        }
     </script>
 </body>
 </html>
