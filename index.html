@@ -16,21 +16,17 @@
   <script src="/assets/js/register.js"></script>
 
   <script>
-    // Helper: returns a valid URL or search URL
     function generateSearchUrl(query) {
-      // Try full URL
       try {
         const url = new URL(query);
         return url.toString();
       } catch {}
 
-      // Try domain (without protocol)
       try {
         const url = new URL("https://" + query);
         if (url.hostname.includes('.')) return url.toString();
       } catch {}
 
-      // Otherwise, treat as search
       return `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}`;
     }
 
@@ -38,10 +34,14 @@
       const input = document.getElementById("searchInput");
       if (!input) return;
 
-      // Wait for UV and config to load
-      await new Promise((resolve) => {
+      // Wait until UV is ready
+      await new Promise(resolve => {
         const check = setInterval(() => {
-          if (window.__uv$config && window.Ultraviolet) {
+          if (
+            window.__uv$config &&
+            window.Ultraviolet &&
+            typeof window.Ultraviolet.prototype.urlCodec !== 'undefined'
+          ) {
             clearInterval(check);
             resolve();
           }
@@ -51,7 +51,7 @@
       const uv = new Ultraviolet(__uv$config);
       uv.init();
 
-      input.addEventListener("keypress", (e) => {
+      input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           const query = input.value.trim();
           if (!query) return;
@@ -59,7 +59,6 @@
           const url = generateSearchUrl(query);
           const encodedUrl = __uv$config.prefix + uv.urlCodec.encode(url);
 
-          // Navigate through UV
           window.location.href = encodedUrl;
         }
       });
