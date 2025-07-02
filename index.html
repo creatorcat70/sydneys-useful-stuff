@@ -15,50 +15,52 @@
   <script src="/active/uv/uv.config.js"></script>
   <script src="/assets/js/register.js"></script>
 
-  <!-- UV Search Handler -->
   <script>
+    // Helper: returns a valid URL or search URL
     function generateSearchUrl(query) {
+      // Try full URL
       try {
         const url = new URL(query);
         return url.toString();
-      } catch {
-        try {
-          const url = new URL(`https://${query}`);
-          if (url.hostname.includes('.')) return url.toString();
-        } catch {}
-      }
+      } catch {}
+
+      // Try domain (without protocol)
+      try {
+        const url = new URL("https://" + query);
+        if (url.hostname.includes('.')) return url.toString();
+      } catch {}
+
+      // Otherwise, treat as search
       return `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}`;
     }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const searchInput = document.getElementById('searchInput');
-      if (!searchInput) return;
+    document.addEventListener("DOMContentLoaded", async () => {
+      const input = document.getElementById("searchInput");
+      if (!input) return;
 
-      // Wait for UV to load
-      await new Promise(resolve => {
-        const interval = setInterval(() => {
-          if (typeof __uv$config !== 'undefined' && typeof Ultraviolet !== 'undefined') {
-            clearInterval(interval);
+      // Wait for UV and config to load
+      await new Promise((resolve) => {
+        const check = setInterval(() => {
+          if (window.__uv$config && window.Ultraviolet) {
+            clearInterval(check);
             resolve();
           }
         }, 50);
       });
 
-      // Init UV
       const uv = new Ultraviolet(__uv$config);
       uv.init();
 
-      // Listen for Enter key
-      searchInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-          const query = this.value.trim();
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          const query = input.value.trim();
           if (!query) return;
 
-          const rawUrl = generateSearchUrl(query);
-          const encoded = __uv$config.prefix + uv.urlCodec.encode(rawUrl);
+          const url = generateSearchUrl(query);
+          const encodedUrl = __uv$config.prefix + uv.urlCodec.encode(url);
 
-          // Navigate via UV in the same tab
-          window.location.href = encoded;
+          // Navigate through UV
+          window.location.href = encodedUrl;
         }
       });
     });
