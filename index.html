@@ -7,14 +7,15 @@
 </head>
 <body>
 
-  <input type="text" id="searchInput" placeholder="Search or enter a URL" style="padding: 12px; font-size: 1rem; width: 100%; max-width: 500px; margin: 100px auto; display: block; border-radius: 8px; border: 1px solid #ccc;">
+  <input type="text" id="searchInput" placeholder="Search or enter a URL" 
+    style="padding: 12px; font-size: 1rem; width: 100%; max-width: 500px; margin: 100px auto; display: block; border-radius: 8px; border: 1px solid #ccc;">
 
-  <!-- UV and Register Scripts -->
+  <!-- Ultraviolet Scripts -->
   <script src="/active/uv/uv.bundle.js"></script>
   <script src="/active/uv/uv.config.js"></script>
   <script src="/assets/js/register.js"></script>
 
-  <!-- Custom Search Handler -->
+  <!-- UV Search Handler -->
   <script>
     function generateSearchUrl(query) {
       try {
@@ -29,24 +30,35 @@
       return `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}`;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const searchInput = document.getElementById('searchInput');
       if (!searchInput) return;
 
+      // Wait for UV to load
+      await new Promise(resolve => {
+        const interval = setInterval(() => {
+          if (typeof __uv$config !== 'undefined' && typeof Ultraviolet !== 'undefined') {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 50);
+      });
+
+      // Init UV
+      const uv = new Ultraviolet(__uv$config);
+      uv.init();
+
+      // Listen for Enter key
       searchInput.addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
           const query = this.value.trim();
           if (!query) return;
 
           const rawUrl = generateSearchUrl(query);
+          const encoded = __uv$config.prefix + uv.urlCodec.encode(rawUrl);
 
-          if (typeof uv$config !== 'undefined' && typeof __uv$config !== 'undefined') {
-            const encoded = uv$config.encodeUrl(rawUrl);
-            const proxyUrl = __uv$config.prefix + encoded;
-            window.location.href = proxyUrl;
-          } else {
-            window.location.href = rawUrl;
-          }
+          // Navigate via UV in the same tab
+          window.location.href = encoded;
         }
       });
     });
@@ -54,4 +66,3 @@
 
 </body>
 </html>
-
