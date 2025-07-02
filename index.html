@@ -3,6 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title> Auraa </title>
+  <title>Auraa</title>
+</head>
+<body>
+
+  <input type="text" id="searchInput" placeholder="Search or enter a URL" style="padding: 12px; font-size: 1rem; width: 100%; max-width: 500px; margin: 100px auto; display: block; border-radius: 8px; border: 1px solid #ccc;">
+
+  <!-- UV and Register Scripts -->
+  <script src="/active/uv/uv.bundle.js"></script>
+  <script src="/active/uv/uv.config.js"></script>
+  <script src="/assets/js/register.js"></script>
+
+  <!-- Custom Search Handler -->
+  <script>
+    function generateSearchUrl(query) {
+      try {
+        const url = new URL(query);
+        return url.toString();
+      } catch {
+        try {
+          const url = new URL(`https://${query}`);
+          if (url.hostname.includes('.')) return url.toString();
+        } catch {}
+      }
+      return `https://www.startpage.com/do/search?query=${encodeURIComponent(query)}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('searchInput');
+      if (!searchInput) return;
+
+      searchInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+          const query = this.value.trim();
+          if (!query) return;
+
+          const rawUrl = generateSearchUrl(query);
+
+          if (typeof uv$config !== 'undefined' && typeof __uv$config !== 'undefined') {
+            const encoded = uv$config.encodeUrl(rawUrl);
+            const proxyUrl = __uv$config.prefix + encoded;
+            window.location.href = proxyUrl;
+          } else {
+            window.location.href = rawUrl;
+          }
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>
+
